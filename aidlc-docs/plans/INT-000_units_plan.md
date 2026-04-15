@@ -1,11 +1,48 @@
 # INT-000 Units Plan
 
-> Purpose: Procedure (with checkboxes) to decompose user story groups into Units (work units that can be developed in parallel)
+## Unit分解方針
 
-- [ ] Review story list (`aidlc-docs/story-artifacts/`)
-- [ ] Organize dependencies and boundaries (what to include in the same Unit)
-- [ ] List Unit candidates and briefly describe purpose/scope of each
-- [ ] Assign user stories to each Unit
-- [ ] Confirm parallel execution feasibility between Units
-- [ ] Human reviews and reflects corrections
+US-001〜US-008を機能の凝集度・依存関係に基づき3つのUnitに分割する。
 
+| Unit | 名称 | 担当 US |
+|------|------|---------|
+| UNIT-001 | 基盤・認証 | US-004（管理者ログイン） |
+| UNIT-002 | 備品マスタ管理・QRコード | US-005, US-006, US-007（備品登録・編集・削除・QR生成） |
+| UNIT-003 | 貸出・返却・閲覧 | US-001, US-002, US-003, US-008（QRスキャン・貸出・返却・履歴） |
+
+## 依存関係
+
+```
+UNIT-001（基盤・認証）
+    └─ UNIT-002（備品マスタ管理・QRコード）
+            └─ UNIT-003（貸出・返却・閲覧）
+```
+
+- UNIT-002はUNIT-001の認証基盤に依存する
+- UNIT-003はUNIT-002で作成した備品マスタのデータモデルに依存する
+
+## Unit別スコープ
+
+### UNIT-001: 基盤・認証
+- DBスキーマ全体（items / loan_records テーブル）の定義
+- 管理者ログイン・ログアウト（環境変数でID/PW管理）
+- Next.js middleware によるルート保護（/admin 配下）
+- 既存コメント機能の削除（完全置き換え）
+
+### UNIT-002: 備品マスタ管理・QRコード
+- 備品一覧・登録・編集・削除（管理者画面）
+- QRコード生成・印刷表示（qrcode.react）
+
+### UNIT-003: 貸出・返却・閲覧
+- QRコードスキャン画面（html5-qrcode）
+- 貸出フォーム・返却ボタン
+- トップページ：現在の貸出状況一覧
+- 管理者画面：全貸出履歴一覧
+
+## チェックリスト
+
+- [x] ストーリー一覧の確認（US-001〜US-008）
+- [x] 依存関係・境界の整理
+- [x] Unitの候補リストと目的の明記
+- [x] 各UnitへのUS割り当て
+- [x] Unit間の並列実行可否の確認（直列依存のため順次実行）

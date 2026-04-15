@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Comments",
-  description: "Neon + Drizzle サンプル",
+  title: "備品管理システム",
+  description: "備品の貸出・返却を管理するシステム",
 };
 
 export default function RootLayout({

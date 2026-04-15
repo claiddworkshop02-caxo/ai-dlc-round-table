@@ -1,100 +1,126 @@
-import { revalidatePath } from "next/cache";
-import { desc } from "drizzle-orm";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { db } from "@/src/db";
+import { items, loanRecords } from "@/src/schema";
+import { eq, isNull, desc } from "drizzle-orm";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { comments } from "@/src/schema";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
-export const dynamic = "force-dynamic";
+async function getCurrentLoans() {
+  const loans = await db
+    .select({
+      id: loanRecords.id,
+      borrowerName: loanRecords.borrowerName,
+      loanedAt: loanRecords.loanedAt,
+      itemName: items.name,
+      itemCategory: items.category,
+    })
+    .from(loanRecords)
+    .innerJoin(items, eq(loanRecords.itemId, items.id))
+    .where(isNull(loanRecords.returnedAt))
+    .orderBy(desc(loanRecords.loanedAt));
 
-async function getComments() {
-  const { db } = await import("@/src/db");
-  return db.select().from(comments).orderBy(desc(comments.createdAt));
+  return loans;
 }
 
-export default async function Page() {
-  const list = await getComments();
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat("ja-JP", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
 
-  async function create(formData: FormData) {
-    "use server";
-    const { db } = await import("@/src/db");
-    const comment = formData.get("comment");
-    if (typeof comment !== "string" || comment.trim() === "") {
-      return;
-    }
-    await db.insert(comments).values({ comment });
-    revalidatePath("/");
-  }
+export default async function HomePage() {
+  const currentLoans = await getCurrentLoans();
 
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center bg-muted/40 px-4 py-16">
-      <Card className="w-full max-w-md shadow-md">
-        <CardHeader>
-          <CardTitle>Comments</CardTitle>
-          <CardDescription>
-            コメントを入力して送信すると、一覧に反映されます。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form action={create} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="comment">コメント</Label>
-              <Input
-                id="comment"
-                name="comment"
-                type="text"
-                placeholder="write a comment"
-                required
-                autoComplete="off"
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Submit
+    <div className="flex min-h-svh flex-col bg-muted/40">
+      {/* ヘッダー */}
+      <header className="border-b bg-background px-6 py-4">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
+          <h1 className="text-lg font-bold">備品管理システム</h1>
+          <Link href="/admin">
+            <Button variant="outline" size="sm">
+              管理者ログイン
             </Button>
-          </form>
+          </Link>
+        </div>
+      </header>
 
-          <Separator />
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 space-y-6">
+        {/* QRスキャンボタン */}
+        <Card>
+          <CardContent className="pt-6 pb-6 text-center">
+            <p className="mb-4 text-muted-foreground">
+              備品を借りる・返却するにはQRコードをスキャンしてください
+            </p>
+            <Link href="/scan">
+              <Button size="lg" className="h-14 px-8 text-base font-bold">
+                QRコードをスキャンする
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
 
-          <section aria-labelledby="comments-heading">
-            <h2
-              id="comments-heading"
-              className="mb-3 text-sm font-medium text-muted-foreground"
-            >
-              登録済み（新しい順）
-            </h2>
-            {list.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                まだコメントはありません。
+        {/* 現在の貸出状況 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              現在の貸出状況
+              {currentLoans.length > 0 && (
+                <Badge variant="warning">{currentLoans.length} 件貸出中</Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {currentLoans.length === 0 ? (
+              <p className="py-4 text-center text-muted-foreground">
+                現在貸出中の備品はありません
               </p>
             ) : (
-              <ul className="flex flex-col gap-3">
-                {list.map((row) => (
-                  <li
-                    key={row.id}
-                    className="rounded-lg border border-border bg-muted/50 px-3 py-2.5"
-                  >
-                    <p className="text-sm text-foreground">{row.comment}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {row.createdAt.toLocaleString("ja-JP", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              <div className="rounded-xl ring-1 ring-foreground/10 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>備品名</TableHead>
+                      <TableHead>借りている人</TableHead>
+                      <TableHead>貸出日時</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentLoans.map((loan) => (
+                      <TableRow key={loan.id}>
+                        <TableCell className="font-medium">
+                          {loan.itemName}
+                        </TableCell>
+                        <TableCell>{loan.borrowerName}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDate(loan.loanedAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
-          </section>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 }
