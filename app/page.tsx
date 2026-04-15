@@ -71,11 +71,18 @@ export default async function HomePage() {
             <p className="mb-4 text-muted-foreground">
               備品を借りる・返却するにはQRコードをスキャンしてください
             </p>
-            <Link href="/scan">
-              <Button size="lg" className="h-14 px-8 text-base font-bold">
-                QRコードをスキャンする
-              </Button>
-            </Link>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link href="/scan">
+                <Button size="lg" className="h-14 w-full px-8 text-base font-bold sm:w-auto">
+                  QRコードをスキャンする
+                </Button>
+              </Link>
+              <Link href="/items">
+                <Button size="lg" variant="outline" className="h-14 w-full px-8 text-base font-bold sm:w-auto">
+                  備品一覧から選ぶ
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
 

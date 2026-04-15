@@ -40,6 +40,7 @@ export async function loanItem(
   });
 
   revalidatePath("/");
+  revalidatePath("/items");
   revalidatePath(`/scan/${itemId}`);
   revalidatePath("/admin/loans");
 
@@ -64,6 +65,7 @@ export async function returnItem(
     .where(eq(loanRecords.id, loanRecordId));
 
   revalidatePath("/");
+  revalidatePath("/items");
   revalidatePath(`/scan/${loan[0].itemId}`);
   revalidatePath("/admin/loans");
 
