@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { db } from "@/src/db";
 import { items, loanRecords } from "@/src/schema";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { db } from "@/src/db";
 import { items, loanRecords } from "@/src/schema";
 import { eq, desc } from "drizzle-orm";
